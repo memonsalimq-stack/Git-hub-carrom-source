@@ -43,14 +43,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      # Versions come from app/build.gradle: compileSdkVersion 30, ndkVersion 22.0.7026061
-      - name: Install SDK platform and NDK
+      # Runner already ships an Android SDK + sdkmanager; use it directly
+      # (setup-android's default "tools" package install fails on current runners).
+      - name: Install SDK platform, build-tools and NDK
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-30" "build-tools;34.0.0" "ndk;22.0.7026061"
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          SDKM="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-30" "build-tools;34.0.0" "ndk;22.0.7026061"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
       - name: Cache Gradle
         uses: actions/cache@v4
